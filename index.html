@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BlockCraft 2D — a tiny block sandbox</title>
+<meta name="description" content="A tiny Minecraft-inspired 2D block sandbox you can play in your browser and install as an app.">
+<meta name="theme-color" content="#5aa02c">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/icon-192x192.png">
+<link rel="apple-touch-icon" href="icons/icon-180x180.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="game" aria-label="BlockCraft 2D world. Move with arrow keys or A and D, jump with space, left click to mine, right click to place blocks."></canvas>
+
+<div id="hud">
+  <div class="topbar">
+    <div class="brand"><span class="brand-block" aria-hidden="true"></span><span>BlockCraft</span></div>
+    <div class="actions">
+      <button id="btn-save" class="chip" type="button">Save</button>
+      <button id="btn-new" class="chip" type="button">New world</button>
+      <button id="btn-install" class="chip primary" type="button" hidden>Install app</button>
+    </div>
+  </div>
+
+  <div class="hotbar" id="hotbar" role="toolbar" aria-label="Block picker"></div>
+
+  <div class="touch-controls" aria-hidden="true">
+    <div class="pad">
+      <button id="btn-left" class="tbtn" type="button" aria-label="Move left">&#9664;</button>
+      <button id="btn-right" class="tbtn" type="button" aria-label="Move right">&#9654;</button>
+    </div>
+    <div class="pad right">
+      <button id="btn-mode" class="tbtn mode" type="button" aria-label="Switch between mining and placing blocks">Mine</button>
+      <button id="btn-jump" class="tbtn" type="button" aria-label="Jump">&#9650;</button>
+    </div>
+  </div>
+</div>
+
+<div id="overlay" class="overlay">
+  <div class="panel">
+    <div class="panel-icon" aria-hidden="true"></div>
+    <h1>BlockCraft <span>2D</span></h1>
+    <p class="tag">A tiny Minecraft-inspired sandbox. Mine blocks, build anything, and watch the sun go down (nothing will hurt you&hellip; yet).</p>
+    <button id="btn-play" class="play" type="button">Play</button>
+    <ul class="controls">
+      <li><kbd>&larr;</kbd><kbd>&rarr;</kbd> or <kbd>A</kbd><kbd>D</kbd> move</li>
+      <li><kbd>Space</kbd> or <kbd>W</kbd> jump</li>
+      <li>Left click mines &middot; right click places</li>
+      <li><kbd>1</kbd>&ndash;<kbd>8</kbd> pick a block</li>
+    </ul>
+    <p class="hint">Your world saves automatically in this browser.</p>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript><p style="position:fixed;inset:auto 16px 16px;color:#fff;background:#000;padding:12px">BlockCraft needs JavaScript enabled.</p></noscript>
+
+<script src="js/game.js"></script>
+</body>
+</html>

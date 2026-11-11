@@ -1,0 +1,37 @@
+name: Bump service worker cache
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'sw.js'
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rewrite CACHE_NAME with commit SHA
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          sed -i -E "s/const CACHE_NAME = 'blockcraft-[^']*';/const CACHE_NAME = 'blockcraft-$SHA';/" sw.js
+          grep "const CACHE_NAME" sw.js
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "No change, skipping"
+            exit 0
+          fi
+          git add sw.js
+          git commit -m "chore: bump cache to ${{ github.sha }} [skip ci]"
+          git push
