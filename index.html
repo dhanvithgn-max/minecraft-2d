@@ -3,16 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BlockCraft 2D — a tiny block sandbox</title>
-<meta name="description" content="A tiny Minecraft-inspired 2D block sandbox you can play in your browser and install as an app.">
+<title>BlockCraft — 2D &amp; 3D block sandbox</title>
+<meta name="description" content="A tiny Minecraft-inspired block sandbox with 2D and 3D modes, survival and creative play, installable as an app.">
 <meta name="theme-color" content="#5aa02c">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icons/icon-192x192.png">
 <link rel="apple-touch-icon" href="icons/icon-180x180.png">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="dim-2d">
+
 <canvas id="game" aria-label="BlockCraft 2D world. Move with arrow keys or A and D, jump with space, left click to mine, right click to place blocks."></canvas>
+<canvas id="game3d" aria-label="BlockCraft 3D world. Move with WASD, jump with space, left click to mine, right click to place blocks."></canvas>
 
 <div id="hud">
   <div class="topbar">
@@ -20,18 +22,26 @@
     <div class="actions">
       <button id="btn-save" class="chip" type="button">Save</button>
       <button id="btn-new" class="chip" type="button">New world</button>
+      <button id="btn-menu" class="chip" type="button">Menu</button>
+      <button id="btn-recipes-game" class="chip" type="button">Recipes</button>
+      <button id="btn-settings-game" class="chip" type="button">&#9881; Settings</button>
       <button id="btn-install" class="chip primary" type="button" hidden>Install app</button>
     </div>
   </div>
 
+  <div id="fps" class="fps hidden" aria-live="off"></div>
+  <div id="crosshair" class="crosshair" aria-hidden="true"></div>
+  <div id="hearts" class="hearts" role="img" aria-label="Health"></div>
   <div class="hotbar" id="hotbar" role="toolbar" aria-label="Block picker"></div>
 
   <div class="touch-controls" aria-hidden="true">
-    <div class="pad">
+    <div id="joy" class="joy"><div id="joy-knob" class="knob"></div></div>
+    <div class="pad two-d">
       <button id="btn-left" class="tbtn" type="button" aria-label="Move left">&#9664;</button>
       <button id="btn-right" class="tbtn" type="button" aria-label="Move right">&#9654;</button>
     </div>
     <div class="pad right">
+      <button id="btn-fly" class="tbtn" type="button" aria-label="Toggle flying">&#9992;</button>
       <button id="btn-mode" class="tbtn mode" type="button" aria-label="Switch between mining and placing blocks">Mine</button>
       <button id="btn-jump" class="tbtn" type="button" aria-label="Jump">&#9650;</button>
     </div>
@@ -41,22 +51,82 @@
 <div id="overlay" class="overlay">
   <div class="panel">
     <div class="panel-icon" aria-hidden="true"></div>
-    <h1>BlockCraft <span>2D</span></h1>
-    <p class="tag">A tiny Minecraft-inspired sandbox. Mine blocks, build anything, and watch the sun go down (nothing will hurt you&hellip; yet).</p>
+    <h1>BlockCraft <span>2D &middot; 3D</span></h1>
+    <p class="tag">A tiny Minecraft-inspired sandbox. Mine blocks, build anything, survive or fly free &mdash; in 2D or full 3D.</p>
+
+    <div class="choice" role="group" aria-label="Dimension">
+      <span class="choice-label">World</span>
+      <button id="dim-2d" class="chip toggle" type="button" aria-pressed="true">2D</button>
+      <button id="dim-3d" class="chip toggle" type="button" aria-pressed="false">3D</button>
+    </div>
+    <div class="choice" role="group" aria-label="Game mode">
+      <span class="choice-label">Mode</span>
+      <button id="mode-surv" class="chip toggle" type="button" aria-pressed="true">Survival</button>
+      <button id="mode-creat" class="chip toggle" type="button" aria-pressed="false">Creative</button>
+    </div>
+
     <button id="btn-play" class="play" type="button">Play</button>
-    <ul class="controls">
-      <li><kbd>&larr;</kbd><kbd>&rarr;</kbd> or <kbd>A</kbd><kbd>D</kbd> move</li>
-      <li><kbd>Space</kbd> or <kbd>W</kbd> jump</li>
+    <button id="btn-recipes" class="chip wide" type="button">Recipes &middot; common &amp; uncommon</button>
+    <button id="btn-settings" class="chip wide" type="button">&#9881; Settings</button>
+
+    <ul class="controls" id="controls-2d">
+      <li><kbd>&larr;</kbd><kbd>&rarr;</kbd> or <kbd>A</kbd><kbd>D</kbd> move &middot; <kbd>Space</kbd> jump</li>
       <li>Left click mines &middot; right click places</li>
-      <li><kbd>1</kbd>&ndash;<kbd>8</kbd> pick a block</li>
+      <li><kbd>1</kbd>&ndash;<kbd>8</kbd> pick a block &middot; <kbd>C</kbd> recipes</li>
+    </ul>
+    <ul class="controls hidden" id="controls-3d">
+      <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &middot; <kbd>&larr;</kbd><kbd>&rarr;</kbd> turn &middot; <kbd>Space</kbd> jump</li>
+      <li>Mouse looks &middot; scroll zooms &middot; left mines &middot; right places</li>
+      <li>Creative: double-tap <kbd>Space</kbd> to fly &middot; <kbd>C</kbd> recipes</li>
     </ul>
     <p class="hint">Your world saves automatically in this browser.</p>
   </div>
 </div>
 
+<div id="settings" class="overlay modal hidden" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="panel small">
+    <h2>Settings</h2>
+    <label class="row"><span>Sound effects</span><input type="checkbox" id="set-sound"></label>
+    <label class="row"><span>Show FPS</span><input type="checkbox" id="set-fps"></label>
+    <div class="row"><span>Mouse speed</span><input type="range" id="set-sens" min="0.4" max="2" step="0.1" value="1"></div>
+    <label class="row"><span>Invert look Y</span><input type="checkbox" id="set-inv"></label>
+    <label class="row"><span>Render distance</span>
+      <select id="set-rd">
+        <option value="0">Near</option>
+        <option value="1" selected>Medium</option>
+        <option value="2">Far</option>
+      </select>
+    </label>
+    <div class="row btns">
+      <button id="btn-set-reset" class="chip" type="button">Reset</button>
+      <button id="btn-set-close" class="chip primary" type="button">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="recipes" class="overlay modal hidden" role="dialog" aria-modal="true" aria-label="Recipes">
+  <div class="panel craft-panel">
+    <h2>Recipes <span class="craft-sub">common &amp; uncommon</span></h2>
+    <p class="tag craft-note" id="craft-note"></p>
+    <div id="recipe-list" class="recipe-list"></div>
+    <div class="row btns"><button id="btn-craft-close" class="chip primary" type="button">Done</button></div>
+  </div>
+</div>
+
+<div id="death" class="overlay death hidden" role="dialog" aria-modal="true" aria-label="You died">
+  <div class="panel small">
+    <h1 class="dead">You died</h1>
+    <p class="tag">The blocks will remember you.</p>
+    <button id="btn-respawn" class="play" type="button">Respawn</button>
+  </div>
+</div>
+
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="dmg" class="dmg" aria-hidden="true"></div>
 <noscript><p style="position:fixed;inset:auto 16px 16px;color:#fff;background:#000;padding:12px">BlockCraft needs JavaScript enabled.</p></noscript>
 
-<script src="js/game.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/recipes.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

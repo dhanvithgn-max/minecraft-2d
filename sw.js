@@ -1,9 +1,14 @@
-const CACHE_NAME = 'blockcraft-e8398c3';
+const CACHE_NAME = 'blockcraft-2d3d-v4';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
+  './js/sound.js',
+  './js/recipes.js',
+  './js/app.js',
   './js/game.js',
+  './js/game3d.js',
+  './js/three.min.js',
   './manifest.json',
   './icons/icon-180x180.png',
   './icons/icon-192x192.png',
@@ -32,17 +37,19 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
 
+  const fresh = req.mode === 'navigate' || /\.(?:html|js|css|json)$/i.test(url.pathname);
+
   e.respondWith(
-    caches.match(req).then((hit) => {
-      if (hit) return hit;
-      return fetch(req).then((res) => {
+    (fresh ? fetch(req) : caches.match(req).then((hit) => hit || fetch(req)))
+      .then((res) => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {});
         return res;
-      }).catch(() => {
+      })
+      .catch(() => caches.match(req).then((hit) => {
+        if (hit) return hit;
         if (req.mode === 'navigate') return caches.match('./index.html');
         return Response.error();
-      });
-    })
+      }))
   );
 });
